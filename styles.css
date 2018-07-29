@@ -1,3 +1,7 @@
-.bar-chart{
+.svg-container{
     background-color: aquamarine;
+}
+
+body {
+    margin-left: 40px;
 }

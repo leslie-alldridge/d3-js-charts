@@ -164,3 +164,59 @@
 
 //creating pie charts 
 
+var data = [
+    {"platform": "Android", "percentage": 40.11},
+    {"platform": "Windows", "percentage": 36.69},
+    {"platform": "iOS", "percentage": 13.06}
+];
+
+var svgWidth = 500, svgHeight = 300, radius = Math.min(svgWidth, svgHeight) / 2;
+var svg = d3.select('svg')
+    .attr("width", svgWidth)
+    .attr("height", svgHeight)
+
+//create group element to hold pie chart
+var g = svg.append("g")
+    .attr("transform", "translate(" + radius + "," + radius + ")");
+
+var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+var pie = d3.pie().value(function(d){
+    return d.percentage;
+});
+
+var path = d3.arc()
+    .outerRadius(radius)
+    .innerRadius(0);
+
+var arc = g.selectAll("arc")
+    .data(pie(data))
+    .enter()
+    .append("g");
+
+    //append text on mouseover and mouse out
+arc.append("path")
+    .attr("d", path)
+    .on("mouseover", function(d, i) {
+        console.log(d);
+        svg.append("text")
+            .attr("x", 0)
+            .attr("y", 10)
+          .attr("dy", ".5em")
+          .style("text-anchor", "start")
+          .style("font-size", 15)
+          .attr("class","label")
+          .style("fill", function(d,i){return "black";})
+          .text(d.data.platform);
+        
+    })
+    .on("mouseout", function(d) {
+      svg.select(".label").remove();
+    })
+    .attr("fill", function(d){
+        return color(d.data.percentage);
+    });
+var label = d3.arc()
+    .outerRadius(radius)
+    .innerRadius(0);
+    
