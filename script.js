@@ -164,59 +164,149 @@
 
 //creating pie charts 
 
-var data = [
-    {"platform": "Android", "percentage": 40.11},
-    {"platform": "Windows", "percentage": 36.69},
-    {"platform": "iOS", "percentage": 13.06}
-];
+// var data = [
+//     {"platform": "Android", "percentage": 40.11},
+//     {"platform": "Windows", "percentage": 36.69},
+//     {"platform": "iOS", "percentage": 13.06}
+// ];
 
-var svgWidth = 500, svgHeight = 300, radius = Math.min(svgWidth, svgHeight) / 2;
-var svg = d3.select('svg')
-    .attr("width", svgWidth)
-    .attr("height", svgHeight)
+// var svgWidth = 500, svgHeight = 300, radius = Math.min(svgWidth, svgHeight) / 2;
+// var svg = d3.select('svg')
+//     .attr("width", svgWidth)
+//     .attr("height", svgHeight)
 
-//create group element to hold pie chart
-var g = svg.append("g")
-    .attr("transform", "translate(" + radius + "," + radius + ")");
+// //create group element to hold pie chart
+// var g = svg.append("g")
+//     .attr("transform", "translate(" + radius + "," + radius + ")");
 
-var color = d3.scaleOrdinal(d3.schemeCategory10);
+// var color = d3.scaleOrdinal(d3.schemeCategory10);
 
-var pie = d3.pie().value(function(d){
-    return d.percentage;
-});
+// var pie = d3.pie().value(function(d){
+//     return d.percentage;
+// });
 
-var path = d3.arc()
-    .outerRadius(radius)
-    .innerRadius(0);
+// var path = d3.arc()
+//     .outerRadius(radius)
+//     .innerRadius(0);
 
-var arc = g.selectAll("arc")
-    .data(pie(data))
-    .enter()
-    .append("g");
+// var arc = g.selectAll("arc")
+//     .data(pie(data))
+//     .enter()
+//     .append("g");
 
-    //append text on mouseover and mouse out
-arc.append("path")
-    .attr("d", path)
-    .on("mouseover", function(d, i) {
-        console.log(d);
-        svg.append("text")
-            .attr("x", 0)
-            .attr("y", 10)
-          .attr("dy", ".5em")
-          .style("text-anchor", "start")
-          .style("font-size", 15)
-          .attr("class","label")
-          .style("fill", function(d,i){return "black";})
-          .text(d.data.platform);
+//     //append text on mouseover and mouse out
+// arc.append("path")
+//     .attr("d", path)
+//     .on("mouseover", function(d, i) {
+//         console.log(d);
+//         svg.append("text")
+//             .attr("x", 0)
+//             .attr("y", 10)
+//           .attr("dy", ".5em")
+//           .style("text-anchor", "start")
+//           .style("font-size", 15)
+//           .attr("class","label")
+//           .style("fill", function(d,i){return "black";})
+//           .text(d.data.platform);
         
-    })
-    .on("mouseout", function(d) {
-      svg.select(".label").remove();
-    })
-    .attr("fill", function(d){
-        return color(d.data.percentage);
-    });
-var label = d3.arc()
-    .outerRadius(radius)
-    .innerRadius(0);
+//     })
+//     .on("mouseout", function(d) {
+//       svg.select(".label").remove();
+//     })
+//     .attr("fill", function(d){
+//         return color(d.data.percentage);
+//     });
+// var label = d3.arc()
+//     .outerRadius(radius)
+//     .innerRadius(0);
     
+
+//line chart using bitcoin JSON
+
+//historical bitcoin prices API
+
+const api = 'https://api.coindesk.com/v1/bpi/historical/close.json?start=2017-12-31&end=2018-07-30';
+
+//loading API after dom is ready
+
+document.addEventListener("DOMContentLoaded", function(event) {
+    fetch(api)
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            var parsedData = parseData(data);
+            drawChart(parsedData);
+        })
+        .catch(function(err) { console.log(err); })
+    });
+
+//parse data into key value pairs
+
+function parseData(data) {
+    var arr = [];
+    for (var i in data.bpi) {
+        arr.push({
+            date: new Date(i), //date
+            value: +data.bpi[i] //convert string to number
+        });
+    }
+    return arr;
+}
+
+//create chart using d3
+
+function drawChart(data) {
+    var svgWidth = 600, svgHeight = 400;
+    var margin = { top: 20, right: 20, bottom: 30, left: 50 };
+    var width = svgWidth - margin.left - margin.right;
+    var height = svgHeight - margin.top - margin.bottom;
+    
+    var svg = d3.select('svg')
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
+        
+    var g = svg.append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    
+    var x = d3.scaleTime()
+        .rangeRound([0, width]);
+    
+    var y = d3.scaleLinear()
+        .rangeRound([height, 0]);
+    
+    var line = d3.line()
+        .x(function(d) { return x(d.date)})
+        .y(function(d) { return y(d.value)})
+        x.domain(d3.extent(data, function(d) { return d.date }));
+        y.domain(d3.extent(data, function(d) { return d.value }));
+    
+    g.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x))
+        .select(".domain")
+        .remove();
+    
+    g.append("g")
+        .call(d3.axisLeft(y))
+        .append("text")
+        .attr("fill", "#000")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text("Price ($)");
+    
+    g.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+    }
+
+
+
+
+
+

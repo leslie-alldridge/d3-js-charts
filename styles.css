@@ -1,7 +1,4 @@
-.svg-container{
-    background-color: aquamarine;
-}
-
-body {
-    margin-left: 40px;
+html, body {
+    margin: 0;
+    padding: 0;
 }
